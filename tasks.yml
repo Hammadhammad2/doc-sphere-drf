@@ -1,0 +1,80 @@
+---
+- hosts: <host-group-name>
+  become: yes
+  vars:
+    packages:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - make
+      - htop
+      - git
+    docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
+    docker_repo: deb https://download.docker.com/linux/ubuntu focal stable
+    docker_packges:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    docker_compose_version: 1.29.2
+    repo_url: <repo-url>
+    branch: <branch-name>
+    project_dir: /srv/doc-sphere
+    make_target: <make-target>
+    env_name: <env-name>
+
+  tasks:
+    - name: Install system packages
+      apt: name={{ packages }} state=latest update_cache=yes
+
+    - name: Add docker gpg key
+      apt_key: url={{ docker_gpg_url }} state=present
+
+    - name: Add docker repository
+      apt_repository: repo={{ docker_repo }} state=present
+
+    - name: Install docker
+      apt: name={{ docker_packges }} state=latest update_cache=yes
+
+    - name: Install docker compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: +x
+
+    - name: Add user
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+        generate_ssh_key: yes
+        ssh_key_type: rsa
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
+        force: no
+      register: user_results
+
+    - name: Show public ssh key
+      debug: msg={{ user_results.ssh_public_key }}
+
+    - name: Pull from github
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_dir }}"
+        key_file: /home/{{ ansible_user }}/.ssh/id_rsa
+        version: "{{ branch }}"
+
+    - name: Copy environment files
+      copy: src={{ item.src }} dest={{ item.dest }}
+      with_items:
+        - {
+            src: "./config/env/{{ env_name }}/.django",
+            dest: "{{ project_dir }}/config/env/{{ env_name }}/.django",
+          }
+        - {
+            src: "./config/env/{{ env_name }}/.postgres",
+            dest: "{{ project_dir }}/config/env/{{ env_name }}/.postgres",
+          }
+
+    - name: Deployment
+      make: chdir={{ project_dir }} target={{ make_target }}

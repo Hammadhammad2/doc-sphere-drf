@@ -1,0 +1,89 @@
+version: "3.4"
+
+x-common: &common
+  stdin_open: true
+  tty: true
+  restart: unless-stopped
+
+x-django-build: &django-build
+  build:
+    context: .
+    args:
+      REQUIREMENT_FILE: $REQUIREMENT_FILE
+
+services:
+  celery:
+    <<: [*django-build, *common]
+    command: bash -c "celery -A $PROJECT worker -l info"
+    depends_on:
+      - django
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./:/code
+      - ${PROJECT}_media_volume:/code/media
+
+  celery_beat:
+    <<: [*django-build, *common]
+    command: bash -c "celery -A $PROJECT beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      - django
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./:/code
+      - ${PROJECT}_media_volume:/code/media
+
+  django:
+    <<: [*django-build, *common]
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./:/code
+      - ${PROJECT}_static_volume:/code/static
+      - ${PROJECT}_media_volume:/code/media
+    depends_on:
+      - postgres
+      - redis
+
+  flower:
+    <<: [*django-build, *common]
+    command: bash -c "celery -A $PROJECT flower --conf=/code/config/settings/flowerconfig.py"
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - .:/code/
+
+  postgres:
+    image: postgres:15.4-bookworm
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${PROJECT}_postgres_data:/var/lib/postgresql/data/
+    <<: *common
+
+  redis:
+    image: redis:7.2-bookworm
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${PROJECT}_redis_data:/data
+    <<: *common
+
+volumes:
+  doc_sphere_postgres_data:
+  doc_sphere_redis_data:
+  doc_sphere_static_volume:
+  doc_sphere_media_volume:

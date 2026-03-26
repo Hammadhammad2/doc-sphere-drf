@@ -1,0 +1,46 @@
+########## DOCKER
+PROJECT=doc_sphere
+REQUIREMENT_FILE=config/requirements/dev.txt
+GUNICORN_WORKERS=2
+GUNICORN_THREADS=2
+
+########## DJANGO
+ENV=dev
+BASE_URL=http://localhost:8000
+
+DJANGO_ALLOWED_HOSTS=*
+DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8000
+DJANGO_SETTINGS_MODULE=config.settings.dev
+DJANGO_SECRET_KEY='django-insecure-b7pm_x4%gn-rraf#zi9^1!6v0eucuz2-33mkypju-gli^uwv&+'
+DJANGO_SENTRY_DSN=
+
+DB_ENGINE=django.db.backends.postgresql
+DB_HOST=postgres
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=doc_sphere
+DB_PORT=5432
+
+REDIS_URL=redis://redis:6379
+
+FLOWER_USERNAME=admin
+FLOWER_PASSWORD=admin
+
+ACCESS_TOKEN_LIFETIME_IN_SECS=300
+REFRESH_TOKEN_LIFETIME_IN_SECS=86400
+
+DEFAULT_FROM_EMAIL=
+SENDGRID_API_KEY=
+
+ENABLE_OTP=True
+
+########## POSTGRES
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=doc_sphere
+
+########## NGINX
+SERVER_NAME=example.org
+
+########## NEWRELIC
+$NRIA_LICENSE_KEY=

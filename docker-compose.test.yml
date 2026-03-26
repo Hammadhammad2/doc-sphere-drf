@@ -1,0 +1,49 @@
+version: "3.4"
+
+x-common: &common
+  stdin_open: true
+  tty: true
+  restart: unless-stopped
+
+x-django-build: &django-build
+  build:
+    context: .
+    args:
+      REQUIREMENT_FILE: $REQUIREMENT_FILE
+
+services:
+  django:
+    <<: [*django-build, *common]
+    env_file:
+      - ./config/env/.test
+    volumes:
+      - ./:/code
+      - doc_sphere_static_volume:/code/static
+      - doc_sphere_media_volume:/code/media
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15.4-bookworm
+    env_file:
+      - ./config/env/.test
+    ports:
+      - "5432"
+    volumes:
+      - doc_sphere_postgres_data:/var/lib/postgresql/data/
+    <<: *common
+
+  redis:
+    image: redis:7.2-bookworm
+    ports:
+      - "6379"
+    volumes:
+      - doc_sphere_redis_data:/data
+    <<: *common
+
+volumes:
+  doc_sphere_postgres_data:
+  doc_sphere_redis_data:
+  doc_sphere_static_volume:
+  doc_sphere_media_volume:
