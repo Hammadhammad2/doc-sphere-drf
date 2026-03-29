@@ -43,6 +43,7 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema_swagger_ui",
     ),
+    path("api/v1/organizations/", include("doc_sphere.organizations.urls")),
 ]
 
 
