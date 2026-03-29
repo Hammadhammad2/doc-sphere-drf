@@ -52,7 +52,7 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.redis",
 ]
 
-CUSTOM_APPS = ["doc_sphere.core", "doc_sphere.users", "doc_sphere.organizations"]
+CUSTOM_APPS = ["doc_sphere.core", "doc_sphere.users", "doc_sphere.organizations", "doc_sphere.projects"]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
