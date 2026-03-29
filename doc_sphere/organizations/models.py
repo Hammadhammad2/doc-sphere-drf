@@ -1,5 +1,7 @@
 import uuid
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
@@ -12,10 +14,13 @@ User = get_user_model()
 INVITE_EXPIRY_DAYS = 7
 
 
+def get_invite_expiry():
+    return timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS)
+
+
 class Organization(TimeStampedModel):
     description = models.TextField(blank=True, default="")
     name = models.CharField(max_length=255)
-
     members = models.ManyToManyField(User, through="organizations.UserOrganization", related_name="organizations")
 
     def __str__(self):
@@ -24,9 +29,10 @@ class Organization(TimeStampedModel):
 
 class UserOrganization(TimeStampedModel):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
-
     organization = models.ForeignKey(
-        "organizations.Organization", on_delete=models.CASCADE, related_name="user_organizations"
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="user_organizations",
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_organizations")
 
@@ -39,11 +45,11 @@ class UserOrganization(TimeStampedModel):
 
 class OrganizationInvite(TimeStampedModel):
     email = models.EmailField()
-    expires_at = models.DateTimeField(default=timezone.now)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
+    expires_at = models.DateTimeField(default=get_invite_expiry)
     status = models.CharField(max_length=20, choices=InviteStatus.choices, default=InviteStatus.PENDING)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-
-    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="invites")
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_organization_invites")
     organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name="invites")
 
     def __str__(self):

@@ -1,9 +1,28 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
+from django.conf import settings
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateAPIView,
+    UpdateAPIView,
+)
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .choices import Role
-from .models import Organization, UserOrganization
-from .permissions import IsOrganizationMemberWithWriteRolePermission
-from .serializers import OrganizationSerializer
+from .choices import InviteStatus, Role
+from .models import Organization, OrganizationInvite, UserOrganization
+from .permissions import IsOrganizationAdminOrOwnerPermission, IsOrganizationMemberWithWriteRolePermission
+from .serializers import (
+    OrganizationInviteCreateSerializer,
+    OrganizationMemberRoleUpdateSerializer,
+    OrganizationSerializer,
+)
 
 
 class OrganizationListCreateAPIView(ListCreateAPIView):
@@ -23,3 +42,84 @@ class OrganizationDetailAPIView(RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Organization.objects.filter(members=self.request.user)
+
+
+class OrganizationInviteCreateAPIView(CreateAPIView):
+    serializer_class = OrganizationInviteCreateSerializer
+    permission_classes = (IsOrganizationAdminOrOwnerPermission,)
+
+    def get_organization(self):
+        return get_object_or_404(Organization, pk=self.kwargs["organization_id"])
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["organization"] = self.get_organization()
+        return context
+
+    def perform_create(self, serializer):
+        organization = self.get_organization()
+        invite = serializer.save(organization=organization, invited_by=self.request.user)
+        self._send_invite_email(invite)
+
+    def _send_invite_email(self, invite):
+        accept_url = self.request.build_absolute_uri(
+            reverse("organizations:accept_invite", kwargs={"token": str(invite.token)})
+        )
+
+        subject = f"Invitation to join {invite.organization.name}"
+
+        message = (
+            f"You have been invited to join {invite.organization.name}.\n\n"
+            f"Accept invite: {accept_url}\n"
+            f"Invite expires at: {invite.expires_at.isoformat()}"
+        )
+        send_mail(subject, message, getattr(settings, "DEFAULT_FROM_EMAIL", None), [invite.email])
+
+
+class OrganizationInviteAcceptAPIView(APIView):
+    def post(self, request, token):
+        invite = get_object_or_404(OrganizationInvite.objects.select_related("organization"), token=token)
+        if invite.status != InviteStatus.PENDING:
+            raise ValidationError("This invite is no longer valid.")
+
+        if invite.expires_at <= timezone.now():
+            invite.status = InviteStatus.EXPIRED
+            invite.save(update_fields=["status", "modified"])
+            raise ValidationError("This invite has expired.")
+
+        if request.user.email.lower() != invite.email.lower():
+            raise ValidationError("Invite email does not match the authenticated user.")
+
+        UserOrganization.objects.get_or_create(
+            organization=invite.organization,
+            user=request.user,
+            defaults={"role": invite.role},
+        )
+
+        invite.status = InviteStatus.ACCEPTED
+        invite.save(update_fields=["status", "modified"])
+
+        return Response({"detail": "Invite accepted successfully."}, status=status.HTTP_200_OK)
+
+
+class OrganizationMemberRemoveAPIView(DestroyAPIView):
+    permission_classes = (IsOrganizationAdminOrOwnerPermission,)
+
+    def get_object(self):
+        return get_object_or_404(
+            UserOrganization,
+            organization_id=self.kwargs["organization_id"],
+            user_id=self.kwargs["user_id"],
+        )
+
+
+class OrganizationMemberRoleUpdateAPIView(UpdateAPIView):
+    serializer_class = OrganizationMemberRoleUpdateSerializer
+    permission_classes = (IsOrganizationAdminOrOwnerPermission,)
+
+    def get_object(self):
+        return get_object_or_404(
+            UserOrganization,
+            organization_id=self.kwargs["organization_id"],
+            user_id=self.kwargs["user_id"],
+        )

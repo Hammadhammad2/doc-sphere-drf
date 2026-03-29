@@ -28,6 +28,7 @@ urlpatterns = [
     ),
     path("api/v1/core/", include("doc_sphere.core.api.v1.urls")),
     path("api/v1/users/", include("doc_sphere.users.api.v1.urls")),
+    path("api/v1/organizations/", include("doc_sphere.organizations.urls")),
     re_path(
         r"^app/confirm-email/(?P<key>[-:\w]+)/$",
         TemplateView.as_view(),
@@ -43,7 +44,6 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema_swagger_ui",
     ),
-    path("api/v1/organizations/", include("doc_sphere.organizations.urls")),
 ]
 
 
