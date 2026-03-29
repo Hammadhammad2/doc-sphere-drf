@@ -30,6 +30,7 @@ urlpatterns = [
     path("api/v1/users/", include("doc_sphere.users.api.v1.urls")),
     path("api/v1/organizations/", include("doc_sphere.organizations.urls")),
     path("api/v1/projects/", include("doc_sphere.projects.urls")),
+    path("api/v1/documents/", include("doc_sphere.documents.urls")),
     re_path(
         r"^app/confirm-email/(?P<key>[-:\w]+)/$",
         TemplateView.as_view(),
