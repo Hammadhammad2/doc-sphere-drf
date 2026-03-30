@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (
+from doc_sphere.organizations.views import (
     OrganizationListCreateAPIView,
     OrganizationRetrieveUpdateAPIView,
 )

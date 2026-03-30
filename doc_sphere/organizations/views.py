@@ -1,9 +1,9 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 
-from .choices import Role
-from .models import Organization, UserOrganization
-from .permissions import IsOrganizationMemberWithWriteRolePermission
-from .serializers import OrganizationSerializer
+from doc_sphere.organizations.choices import Role
+from doc_sphere.organizations.models import Organization, UserOrganization
+from doc_sphere.organizations.permissions import IsOrganizationMemberWithWriteRolePermission
+from doc_sphere.organizations.serializers import OrganizationSerializer
 
 
 class OrganizationListCreateAPIView(ListCreateAPIView):

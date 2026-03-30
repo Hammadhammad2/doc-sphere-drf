@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django_extensions.db.models import TimeStampedModel
 
-from .choices import InviteStatus, Role
+from doc_sphere.organizations.choices import InviteStatus, Role
 
 
 User = get_user_model()
@@ -31,7 +31,7 @@ class UserOrganization(TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_organizations")
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["user", "organization"], name="unique_user_organization")]
+        constraints = (models.UniqueConstraint(fields=["user", "organization"], name="unique_user_organization"),)
 
     def __str__(self):
         return f"{self.user} - {self.organization} ({self.role})"

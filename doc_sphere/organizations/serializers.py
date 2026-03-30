@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
 from doc_sphere.organizations.choices import Role
-
-from .models import Organization
+from doc_sphere.organizations.models import Organization
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
