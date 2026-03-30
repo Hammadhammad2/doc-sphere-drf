@@ -14,6 +14,10 @@ User = get_user_model()
 INVITE_EXPIRY_DAYS = 7
 
 
+def get_invite_expiry():
+    return timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS)
+
+
 class Organization(TimeStampedModel):
     description = models.TextField(blank=True, default="")
     name = models.CharField(max_length=255)
@@ -33,7 +37,7 @@ class UserOrganization(TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_organizations")
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["user", "organization"], name="unique_user_organization")]
+        constraints = (models.UniqueConstraint(fields=["user", "organization"], name="unique_user_organization"),)
 
     def __str__(self):
         return f"{self.user} - {self.organization} ({self.role})"
@@ -42,7 +46,7 @@ class UserOrganization(TimeStampedModel):
 class OrganizationInvite(TimeStampedModel):
     email = models.EmailField()
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
-    expires_at = models.DateTimeField(default=lambda: timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS))
+    expires_at = models.DateTimeField(default=get_invite_expiry)
     status = models.CharField(max_length=20, choices=InviteStatus.choices, default=InviteStatus.PENDING)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_organization_invites")
