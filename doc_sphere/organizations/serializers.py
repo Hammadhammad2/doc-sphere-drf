@@ -24,7 +24,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
             user_organizations__role=Role.OWNER,
             name__iexact=normalized_name,
         )
-        if self.instance is not None:
+
+        if self.instance:
             user_organizations = user_organizations.exclude(pk=self.instance.pk)
 
         if user_organizations.exists():
