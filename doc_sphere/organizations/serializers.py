@@ -6,8 +6,6 @@ from .models import Organization
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(trim_whitespace=True)
-
     class Meta:
         model = Organization
         fields = ("id", "name", "description")

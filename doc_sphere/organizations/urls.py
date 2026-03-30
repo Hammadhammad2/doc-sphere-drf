@@ -1,14 +1,14 @@
 from django.urls import path
 
 from .views import (
-    OrganizationDetailAPIView,
     OrganizationListCreateAPIView,
+    OrganizationRetrieveUpdateAPIView,
 )
 
 
 app_name = "organizations"
 
 urlpatterns = [
-    path("", OrganizationListCreateAPIView.as_view(), name="list_organizations"),
-    path("<int:pk>/", OrganizationDetailAPIView.as_view(), name="organization_detail"),
+    path("", OrganizationListCreateAPIView.as_view(), name="List_create_oeganizations"),
+    path("<int:pk>/", OrganizationRetrieveUpdateAPIView.as_view(), name="organization_detail"),
 ]

@@ -17,7 +17,7 @@ class OrganizationListCreateAPIView(ListCreateAPIView):
         UserOrganization.objects.create(user=self.request.user, organization=organization, role=Role.OWNER)
 
 
-class OrganizationDetailAPIView(RetrieveUpdateAPIView):
+class OrganizationRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = OrganizationSerializer
     permission_classes = (IsOrganizationMemberWithWriteRolePermission,)
 
