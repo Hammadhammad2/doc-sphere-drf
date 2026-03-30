@@ -15,10 +15,13 @@ from rest_framework.generics import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .choices import InviteStatus, Role
-from .models import Organization, OrganizationInvite, UserOrganization
-from .permissions import IsOrganizationAdminOrOwnerPermission, IsOrganizationMemberWithWriteRolePermission
-from .serializers import (
+from doc_sphere.organizations.choices import InviteStatus, Role
+from doc_sphere.organizations.models import Organization, OrganizationInvite, UserOrganization
+from doc_sphere.organizations.permissions import (
+    IsOrganizationAdminOrOwnerPermission,
+    IsOrganizationMemberWithWriteRolePermission,
+)
+from doc_sphere.organizations.serializers import (
     OrganizationInviteCreateSerializer,
     OrganizationMemberRoleUpdateSerializer,
     OrganizationSerializer,
@@ -36,7 +39,7 @@ class OrganizationListCreateAPIView(ListCreateAPIView):
         UserOrganization.objects.create(user=self.request.user, organization=organization, role=Role.OWNER)
 
 
-class OrganizationDetailAPIView(RetrieveUpdateAPIView):
+class OrganizationRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     serializer_class = OrganizationSerializer
     permission_classes = (IsOrganizationMemberWithWriteRolePermission,)
 
@@ -63,7 +66,7 @@ class OrganizationInviteCreateAPIView(CreateAPIView):
 
     def _send_invite_email(self, invite):
         accept_url = self.request.build_absolute_uri(
-            reverse("organizations:accept_invite", kwargs={"token": str(invite.token)})
+            reverse("organizations:organization_invite_accept", kwargs={"token": str(invite.token)})
         )
 
         subject = f"Invitation to join {invite.organization.name}"
@@ -102,7 +105,7 @@ class OrganizationInviteAcceptAPIView(APIView):
         return Response({"detail": "Invite accepted successfully."}, status=status.HTTP_200_OK)
 
 
-class OrganizationMemberRemoveAPIView(DestroyAPIView):
+class OrganizationMemberDestroyAPIView(DestroyAPIView):
     permission_classes = (IsOrganizationAdminOrOwnerPermission,)
 
     def get_object(self):

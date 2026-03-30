@@ -7,6 +7,6 @@ class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
 
 
-class DeleteAccountAPIView(DestroyAPIView):
+class DeleteAccountDestroyAPIView(DestroyAPIView):
     def get_object(self):
         return self.request.user
