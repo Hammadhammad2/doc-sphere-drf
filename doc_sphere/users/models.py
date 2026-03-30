@@ -2,8 +2,8 @@ from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
 
-from .fields import EmailField
-from .managers import UserManager
+from doc_sphere.users.fields import EmailField
+from doc_sphere.users.managers import UserManager
 
 
 class User(AbstractUser):

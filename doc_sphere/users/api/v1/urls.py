@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from .views import DeleteAccountAPIView, GoogleSocialLoginView
+from doc_sphere.users.api.v1.views import DeleteAccountAPIView, GoogleSocialLoginView
 
 
 urlpatterns = [
