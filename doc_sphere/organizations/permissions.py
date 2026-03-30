@@ -16,13 +16,11 @@ class IsOrganizationMemberWithWriteRolePermission(BasePermission):
         ).exists()
 
 
-class IsOrganizationAdminOrOwnerPermission(BasePermission):
+class IsOrganizationAdminOrOwner(BasePermission):
     message = "Only organization admins or owners can perform this action."
 
     def has_permission(self, request, view):
         organization_id = view.kwargs.get("organization_id")
-        if organization_id is None:
-            return False
 
         return UserOrganization.objects.filter(
             organization_id=organization_id,

@@ -4,8 +4,7 @@ from doc_sphere.organizations.views import (
     OrganizationInviteAcceptAPIView,
     OrganizationInviteCreateAPIView,
     OrganizationListCreateAPIView,
-    OrganizationMemberDestroyAPIView,
-    OrganizationMemberRoleUpdateAPIView,
+    OrganizationMemberRetrieveUpdateDestroyAPIView,
     OrganizationRetrieveUpdateAPIView,
 )
 
@@ -26,13 +25,8 @@ urlpatterns = [
         name="organization_invite_accept",
     ),
     path(
-        "<int:organization_id>/members/<int:user_id>/",
-        OrganizationMemberDestroyAPIView.as_view(),
-        name="organization_member_destroy",
-    ),
-    path(
-        "<int:organization_id>/members/<int:user_id>/role/",
-        OrganizationMemberRoleUpdateAPIView.as_view(),
-        name="organization_member_role_update",
+        "<int:organization_id>/members/<int:member_id>/",
+        OrganizationMemberRetrieveUpdateDestroyAPIView.as_view(),
+        name="organization_member_retrieve_update_destroy",
     ),
 ]

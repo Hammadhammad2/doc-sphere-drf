@@ -14,10 +14,6 @@ User = get_user_model()
 INVITE_EXPIRY_DAYS = 7
 
 
-def get_invite_expiry():
-    return timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS)
-
-
 class Organization(TimeStampedModel):
     description = models.TextField(blank=True, default="")
     name = models.CharField(max_length=255)
@@ -46,7 +42,7 @@ class UserOrganization(TimeStampedModel):
 class OrganizationInvite(TimeStampedModel):
     email = models.EmailField()
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
-    expires_at = models.DateTimeField(default=get_invite_expiry)
+    expires_at = models.DateTimeField(default=lambda: timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS))
     status = models.CharField(max_length=20, choices=InviteStatus.choices, default=InviteStatus.PENDING)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_organization_invites")

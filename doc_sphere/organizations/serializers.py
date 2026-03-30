@@ -39,9 +39,6 @@ class OrganizationInviteCreateSerializer(serializers.ModelSerializer):
         fields = ("id", "email", "role", "status", "expires_at", "token")
         read_only_fields = ("id", "status", "expires_at", "token")
 
-    def validate_email(self, value):
-        return value.strip().lower()
-
     def validate(self, attrs):
         organization = self.context["organization"]
         email = attrs["email"]
@@ -58,18 +55,55 @@ class OrganizationInviteCreateSerializer(serializers.ModelSerializer):
 
         user = User.objects.filter(email__iexact=email).first()
 
-        if user is not None and UserOrganization.objects.filter(organization=organization, user=user).exists():
+        if user and UserOrganization.objects.filter(organization=organization, user=user).exists():
             raise serializers.ValidationError({"email": "This user is already a member of the organization."})
 
         return attrs
 
 
-class OrganizationMemberRoleUpdateSerializer(serializers.ModelSerializer):
+class OrganizationInviteAcceptSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        invite = self.context["invite"]
+        request = self.context["request"]
+
+        if invite.status != InviteStatus.PENDING:
+            raise serializers.ValidationError("This invite is no longer valid.")
+
+        if invite.expires_at <= timezone.now():
+            invite.status = InviteStatus.EXPIRED
+            invite.save(update_fields=["status", "modified"])
+            raise serializers.ValidationError("This invite has expired.")
+
+        user_email = (request.user.email or "").lower()
+        if user_email != invite.email.lower():
+            raise serializers.ValidationError("Invite email does not match the authenticated user.")
+
+        attrs["invite"] = invite
+        return attrs
+
+    def save(self, **kwargs):
+        request = self.context["request"]
+        invite = self.validated_data["invite"]
+
+        UserOrganization.objects.get_or_create(
+            organization=invite.organization,
+            user=request.user,
+            defaults={"role": invite.role},
+        )
+
+        invite.status = InviteStatus.ACCEPTED
+        invite.save(update_fields=["status", "modified"])
+        return invite
+
+
+class UserOrganizationUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserOrganization
         fields = ("role",)
 
     def validate_role(self, value):
         if value == Role.OWNER:
-            raise serializers.ValidationError("Owner role cannot be assigned from this endpoint.")
+            raise serializers.ValidationError(
+                "The owner role cannot be assigned from this endpoint. Use the ownership transfer flow instead."
+            )
         return value
